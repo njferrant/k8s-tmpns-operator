@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- tmpns_v1alpha1_tempnamespace.yaml
+# +kubebuilder:scaffold:manifestskustomizesamples

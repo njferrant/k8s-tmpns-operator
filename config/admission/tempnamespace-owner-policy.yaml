@@ -1,0 +1,41 @@
+
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicy
+metadata:
+  name: tempnamespace-owner-or-admin
+spec:
+  failurePolicy: Fail
+  matchConstraints:
+    matchPolicy: Equivalent
+    resourceRules:
+      - apiGroups: ["tmpns.io"]
+        apiVersions: ["v1alpha1"]
+        operations: ["UPDATE", "DELETE"]
+        resources: ["tempnamespaces"]
+  variables:
+    - name: isAdmin
+      expression: >-
+        request.userInfo.groups.exists(
+          g, g in ["system:masters", "kubeadm:cluster-admins", "cluster-admins"]
+        )
+    - name: isController
+      expression: >-
+        request.userInfo.username ==
+        "system:serviceaccount:k8s-tmpns-operator-system:k8s-tmpns-operator-controller-manager"
+    - name: isOwner
+      expression: >-
+        has(oldObject.spec.owner) &&
+        oldObject.spec.owner.username == request.userInfo.username
+  validations:
+    - expression: >-
+        variables.isAdmin || variables.isController || variables.isOwner
+      message: "Only the TempNamespace owner or a cluster administrator may modify or delete this resource."
+      reason: Forbidden
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: ValidatingAdmissionPolicyBinding
+metadata:
+  name: tempnamespace-owner-or-admin
+spec:
+  policyName: tempnamespace-owner-or-admin
+  validationActions: ["Deny"]

@@ -1,0 +1,26 @@
+---
+apiVersion: admissionregistration.k8s.io/v1
+kind: MutatingWebhookConfiguration
+metadata:
+  name: mutating-webhook-configuration
+webhooks:
+- admissionReviewVersions:
+  - v1
+  clientConfig:
+    service:
+      name: webhook-service
+      namespace: system
+      path: /mutate-tmpns-io-v1alpha1-tempnamespace
+  failurePolicy: Fail
+  name: mtempnamespace-v1alpha1.kb.io
+  rules:
+  - apiGroups:
+    - tmpns.io
+    apiVersions:
+    - v1alpha1
+    operations:
+    - CREATE
+    - UPDATE
+    resources:
+    - tempnamespaces
+  sideEffects: None

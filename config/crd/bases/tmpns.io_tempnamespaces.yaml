@@ -1,0 +1,188 @@
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  annotations:
+    controller-gen.kubebuilder.io/version: v0.22.0
+  name: tempnamespaces.tmpns.io
+spec:
+  group: tmpns.io
+  names:
+    kind: TempNamespace
+    listKind: TempNamespaceList
+    plural: tempnamespaces
+    shortNames:
+    - tmpns
+    singular: tempnamespace
+  scope: Cluster
+  versions:
+  - additionalPrinterColumns:
+    - jsonPath: .spec.owner.username
+      name: Owner
+      type: string
+    - jsonPath: .status.namespace
+      name: Namespace
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].status
+      name: Ready
+      type: string
+    - jsonPath: .status.conditions[?(@.type=="Ready")].reason
+      name: Reason
+      type: string
+    - jsonPath: .spec.expiresAt
+      name: Expires
+      type: string
+    name: v1alpha1
+    schema:
+      openAPIV3Schema:
+        description: TempNamespace is the Schema for the tempnamespaces API
+        properties:
+          apiVersion:
+            description: |-
+              APIVersion defines the versioned schema of this representation of an object.
+              Servers should convert recognized schemas to the latest internal value, and
+              may reject unrecognized values.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#resources
+            type: string
+          kind:
+            description: |-
+              Kind is a string value representing the REST resource this object represents.
+              Servers may infer this from the endpoint the client submits requests to.
+              Cannot be updated.
+              In CamelCase.
+              More info: https://git.k8s.io/community/contributors/devel/sig-architecture/api-conventions.md#types-kinds
+            type: string
+          metadata:
+            type: object
+          spec:
+            description: spec defines the desired state of TempNamespace
+            properties:
+              createdAt:
+                description: |-
+                  createdAt is the date time the TempNamespace resource was created, in RFC 3339 date-time
+                  format. Set by a mutating webook during resource creation.
+                format: date-time
+                type: string
+                x-kubernetes-validations:
+                - message: createdAt is immutable
+                  rule: self==oldSelf
+              duration:
+                description: |-
+                  duration is how long the namespace should live, counted from creation. It is a number
+                  followed by a unit: h (hours), d (days), w (weeks) or m (months). For example "4h",
+                  "7d", "2w" or "3m". Required when creating a TempNamespace.
+
+                  This field is input only. When the object is created, a mutating webhook converts it
+                  into expiresAt and removes it, so it does not appear on stored objects. To change the
+                  lifetime afterwards, edit expiresAt; a duration sent on update is ignored with a warning.
+                maxLength: 4
+                pattern: ^[0-9]([0-9][0-9]?)?[hwdm]$
+                type: string
+              expiresAt:
+                description: |-
+                  expiresAt is the date-time the TempNamespace resource expires, in RFC 3339 date-time
+                  format. When the resource expires, the controller deletes the namespace and all resources
+                  in it. Initially set by a mutating webhook during resource creation, the owner may UPDATE
+                  this field to extend or reduce date-time that the TempNamespace resource expires.
+                format: date-time
+                type: string
+              owner:
+                description: |-
+                  owner is the user who created this TempNamespace and the subject granted access to
+                  its namespace. A mutating webhook sets it from the authenticated request; any value
+                  supplied by the client is overwritten. Service accounts are recorded with kind
+                  ServiceAccount, all other users with kind User. Immutable after creation.
+                properties:
+                  uid:
+                    type: string
+                  username:
+                    type: string
+                type: object
+                x-kubernetes-validations:
+                - message: owner is immutable
+                  rule: self==oldSelf
+            type: object
+          status:
+            description: status defines the observed state of TempNamespace
+            properties:
+              conditions:
+                description: |-
+                  conditions represent the current state of the TempNamespace resource.
+                  Each condition has a unique type and reflects the status of a specific aspect of the resource.
+
+                  Standard condition types include:
+                  - "Available": the resource is fully functional
+                  - "Progressing": the resource is being created or updated
+                  - "Degraded": the resource failed to reach or maintain its desired state
+
+                  The status of each condition is one of True, False, or Unknown.
+                items:
+                  description: Condition contains details for one aspect of the current
+                    state of this API Resource.
+                  properties:
+                    lastTransitionTime:
+                      description: |-
+                        lastTransitionTime is the last time the condition transitioned from one status to another.
+                        This should be when the underlying condition changed.  If that is not known, then using the time when the API field changed is acceptable.
+                      format: date-time
+                      type: string
+                    message:
+                      description: |-
+                        message is a human readable message indicating details about the transition.
+                        This may be an empty string.
+                      maxLength: 32768
+                      type: string
+                    observedGeneration:
+                      description: |-
+                        observedGeneration represents the .metadata.generation that the condition was set based upon.
+                        For instance, if .metadata.generation is currently 12, but the .status.conditions[x].observedGeneration is 9, the condition is out of date
+                        with respect to the current state of the instance.
+                      format: int64
+                      minimum: 0
+                      type: integer
+                    reason:
+                      description: |-
+                        reason contains a programmatic identifier indicating the reason for the condition's last transition.
+                        Producers of specific condition types may define expected values and meanings for this field,
+                        and whether the values are considered a guaranteed API.
+                        The value should be a CamelCase string.
+                        This field may not be empty.
+                      maxLength: 1024
+                      minLength: 1
+                      pattern: ^[A-Za-z]([A-Za-z0-9_,:]*[A-Za-z0-9_])?$
+                      type: string
+                    status:
+                      description: status of the condition, one of True, False, Unknown.
+                      enum:
+                      - "True"
+                      - "False"
+                      - Unknown
+                      type: string
+                    type:
+                      description: type of condition in CamelCase or in foo.example.com/CamelCase.
+                      maxLength: 316
+                      pattern: ^([a-z0-9]([-a-z0-9]*[a-z0-9])?(\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*/)?(([A-Za-z0-9][-A-Za-z0-9_.]*)?[A-Za-z0-9])$
+                      type: string
+                  required:
+                  - lastTransitionTime
+                  - message
+                  - reason
+                  - status
+                  - type
+                  type: object
+                type: array
+                x-kubernetes-list-map-keys:
+                - type
+                x-kubernetes-list-type: map
+              namespace:
+                description: namespace is the name of the namespace created for this
+                  resource.
+                type: string
+            type: object
+        required:
+        - spec
+        type: object
+    served: true
+    storage: true
+    subresources:
+      status: {}

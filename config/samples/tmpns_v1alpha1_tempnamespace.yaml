@@ -1,0 +1,9 @@
+apiVersion: tmpns.io/v1alpha1
+kind: TempNamespace
+metadata:
+  labels:
+    app.kubernetes.io/name: k8s-tmpns-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: tempnamespace-sample
+spec:
+  duration: 1w
